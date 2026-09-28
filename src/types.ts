@@ -1,0 +1,7 @@
+export type Config={version:number;level:number;dt:number;seed:number;duration:number;controller:string;observer:string;plantModel:string;reference:string;setpoint:number[];waypoints:[string,number,number][];segmentDuration:number;transitionDuration:number;trim:number;params:Record<string,number>;nominal:Record<string,number>;linked:boolean;kp:number[];kd:number[];ki:number[];lqrQ:number[];lqrR:number[];integralWeight:number;rollLimit:number;observerSpeed:number;filterHz:number;ekfQ:number;ekfR:number[];sensorStd:number[];processStd:number[];initial:number[];flags:Record<string,boolean>};
+export type Row={t:number;x:number[];hat:number[];y:number[];ref:number[];u:number[];pre:number[];sat:number[];effective:number[];theta:number;saturated:boolean;limited:boolean};
+export type Metrics={rmse:number[];estimation:number[];saturation:number;effort:number;waypoints:{point:string;t:number;error:number[]}[]};
+export type Change={step:number;time:number;config:Config};
+export type Experiment={version:1;config:Config;events:Change[]};
+export type Run={id:string;name:string;experiment:Experiment;rows:Row[];metrics:Metrics};
+export type Reply={rows:Row[];metrics:Metrics;stopped:boolean;reason:string;config?:Config;events?:Change[]};

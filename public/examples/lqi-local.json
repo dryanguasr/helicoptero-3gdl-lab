@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "config": {
+    "version": 1,
+    "level": 2,
+    "dt": 0.02,
+    "seed": 2026,
+    "duration": 10,
+    "controller": "lqi",
+    "observer": "exact",
+    "plantModel": "nonlinear",
+    "reference": "smooth",
+    "setpoint": [
+      17,
+      5
+    ],
+    "waypoints": [
+      [
+        "D",
+        0,
+        0
+      ],
+      [
+        "A",
+        -45,
+        -45
+      ],
+      [
+        "D",
+        0,
+        0
+      ],
+      [
+        "B",
+        45,
+        -45
+      ],
+      [
+        "D",
+        0,
+        0
+      ],
+      [
+        "C",
+        0,
+        45
+      ],
+      [
+        "D",
+        0,
+        0
+      ]
+    ],
+    "segmentDuration": 10.0,
+    "transitionDuration": 3.0,
+    "trim": 15.0,
+    "params": {
+      "a_alpha": 2.8,
+      "a_theta": 4.2,
+      "a_psi": 2.8,
+      "k_alpha": 4.5,
+      "k_theta": 2.1,
+      "b_alpha": 0.9,
+      "b_theta": 0.48,
+      "b_psi": 0.32,
+      "coulomb_alpha": 0.055,
+      "coulomb_theta": 0.05,
+      "coulomb_psi": 0.04,
+      "coulomb_smoothing": 0.04,
+      "u_c_max": 1.8,
+      "u_d_max": 1.2,
+      "deadzone_c": 0.07,
+      "deadzone_d": 0.06,
+      "delay_seconds": 0.08
+    },
+    "nominal": {
+      "a_alpha": 2.8,
+      "a_theta": 4.2,
+      "a_psi": 2.8,
+      "k_alpha": 4.5,
+      "k_theta": 2.1,
+      "b_alpha": 0.9,
+      "b_theta": 0.48,
+      "b_psi": 0.32,
+      "coulomb_alpha": 0.055,
+      "coulomb_theta": 0.05,
+      "coulomb_psi": 0.04,
+      "coulomb_smoothing": 0.04,
+      "u_c_max": 1.8,
+      "u_d_max": 1.2,
+      "deadzone_c": 0.07,
+      "deadzone_d": 0.06,
+      "delay_seconds": 0.08
+    },
+    "linked": true,
+    "kp": [
+      6.0,
+      2.0,
+      14.0
+    ],
+    "kd": [
+      4.0,
+      2.0,
+      6.0
+    ],
+    "ki": [
+      0.8,
+      0.2,
+      0.5
+    ],
+    "lqrQ": [
+      30.0,
+      3.0,
+      15.0,
+      2.0,
+      20.0,
+      3.0
+    ],
+    "lqrR": [
+      1.0,
+      1.0
+    ],
+    "integralWeight": 10.0,
+    "rollLimit": 38.0,
+    "observerSpeed": 5.0,
+    "filterHz": 3.0,
+    "ekfQ": 1.0,
+    "ekfR": [
+      0.55,
+      0.55,
+      0.75
+    ],
+    "sensorStd": [
+      0.55,
+      0.55,
+      0.75
+    ],
+    "processStd": [
+      0.02,
+      0.02,
+      0.024
+    ],
+    "initial": [
+      15,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "flags": {
+      "saturation": false,
+      "deadzone": false,
+      "delay": false,
+      "coulomb": false,
+      "measurement": false,
+      "process": false,
+      "disturbance": false,
+      "compensateDeadzone": false,
+      "compensateFriction": false,
+      "compensateDelay": false
+    }
+  },
+  "events": []
+}
