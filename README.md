@@ -1,5 +1,7 @@
 # Helicóptero 3 GDL · Laboratorio de control
 
+**[Abrir el laboratorio público](https://dryanguasr.github.io/helicoptero-3gdl-lab/)** · [Código y seguimiento de versiones](https://github.com/dryanguasr/helicoptero-3gdl-lab)
+
 Laboratorio público, en español y sin cuentas. React/TypeScript, Three.js y Plotly; un motor Python con NumPy/SciPy se ejecuta en un Web Worker con Pyodide. El cuaderno de origen es `helicoptero_3gdl_trayectoria_multipunto_pedagogico_ekf_compensado.ipynb`. La referencia visual es MELFA Kinematics Lab.
 
 ## Ejecutar

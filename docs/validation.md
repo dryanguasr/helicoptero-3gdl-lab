@@ -35,6 +35,9 @@ Estas cifras describen los presets, no una garantía de estabilidad para configu
 - Vista móvil de 390 × 844: diseño en una columna; visor primero; sin desbordamiento horizontal. Vista de escritorio de tres columnas revisada visualmente.
 - Controles numéricos, selectores y botones tienen nombres accesibles; navegación con teclado y acceso al inicio comprobados.
 - Consola durante la simulación revisada sin errores.
+- GitHub Actions: compilación, pruebas y despliegue aprobados en la publicación inicial. Sitio HTTPS público verificado en `https://dryanguasr.github.io/helicoptero-3gdl-lab/`: motor listo y avance de un paso sin errores de consola.
+
+La descarga CSV usa un archivo Blob del navegador. El navegador integrado no entregó el evento de descarga al verificador; no se afirma una comprobación del archivo descargado en ese entorno. La importación JSON, la persistencia local y los enlaces reproducibles sí se comprobaron mediante la interfaz.
 
 ## Límites de esta validación
 
