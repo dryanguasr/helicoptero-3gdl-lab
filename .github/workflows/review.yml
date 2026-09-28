@@ -28,6 +28,7 @@ jobs:
       - run: pip install -r requirements.txt
       - run: python -m unittest discover -s tests -v
       - run: npm ci
+      - run: node --test tests/test_reporting.mjs
       - run: npm run build
       - name: Browser dependencies
         run: |
@@ -36,34 +37,8 @@ jobs:
       - name: Browser smoke and screenshots
         run: |
           npm run preview -- --host 127.0.0.1 > /tmp/lab-preview.log 2>&1 &
-          python - <<'PY'
-          import json, time
-          from pathlib import Path
-          from playwright.sync_api import sync_playwright
-          time.sleep(3)
-          with sync_playwright() as p:
-              browser = p.chromium.launch(args=['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'])
-              page = browser.new_page(viewport={'width': 1440, 'height': 1000}, device_scale_factor=1)
-              errors = []
-              page.on('pageerror', lambda error: errors.append(str(error)))
-              try:
-                  page.goto('http://127.0.0.1:4173/', wait_until='domcontentloaded')
-                  step = page.get_by_role('button', name='Un paso', exact=False)
-                  step.wait_for(state='visible', timeout=180000)
-                  page.wait_for_function("!Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Un paso')).disabled")
-                  step.click()
-                  page.wait_for_function("document.querySelector('.time-overlay')?.textContent.includes('0.02')")
-                  page.screenshot(path='review/desktop.png', full_page=True)
-                  page.set_viewport_size({'width': 390, 'height': 844})
-                  page.wait_for_timeout(500)
-                  page.screenshot(path='review/mobile.png', full_page=True)
-                  assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'), 'Horizontal overflow'
-                  assert not errors, '\n'.join(errors)
-              finally:
-                  Path('review/browser-errors.json').write_text(json.dumps(errors, indent=2))
-                  page.screenshot(path='review/final-state.png', full_page=True)
-                  browser.close()
-          PY
+          sleep 3
+          python tests/browser_smoke.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:

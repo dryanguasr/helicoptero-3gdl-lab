@@ -1,0 +1,49 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {readFileSync} from 'node:fs';
+import ts from 'typescript';
+const source=readFileSync(new URL('../src/reporting.ts',import.meta.url),'utf8');
+const output=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;
+const {courseState,assessHold,summarize,signalCSV,plotIndices,activeTarget}=await import(`data:text/javascript;base64,${Buffer.from(output).toString('base64')}`);
+const rad=x=>x*Math.PI/180;
+const row=(t,x=[0,0,0,0,0,0])=>({t,x,hat:[...x],y:[x[0],x[2],x[4]],ref:[0,0],theta:0,u:[0,0],pre:[0,0],sat:[0,0],effective:[0,0],saturated:false,limited:false});
+const rows=(seconds=4)=>Array.from({length:Math.round(seconds/.02)+1},(_,i)=>row(i*.02));
+test('course convention does not mutate stored engine order',()=>{
+ const state=[1,2,3,4,5,6];assert.deepEqual(courseState(state),[3,4,1,2,5,6]);assert.deepEqual(state,[1,2,3,4,5,6]);
+});
+test('one good sample cannot prove a three-second hold',()=>assert.equal(assessHold([row(3)],[0,0,0]).passed,false));
+test('exactly three seconds confirms sampled permanence',()=>{
+ const result=assessHold(rows(3),[0,0,0]);assert.equal(result.passed,true);assert.equal(result.confirmed,3);assert.equal(result.firstArrival,0);
+});
+test('all three axes must comply, including roll zero',()=>{
+ const data=rows();data.forEach(r=>r.x[2]=rad(6));assert.equal(assessHold(data,[0,0,0]).passed,false);
+});
+test('leaving tolerance restarts the hold counter',()=>{
+ const data=rows();data[100].x[0]=rad(6);const result=assessHold(data,[0,0,0]);assert.equal(result.passed,false);assert.ok(result.longest<3);
+});
+test('a missing interval cannot be credited as continuous permanence',()=>{
+ const data=rows(4).filter(r=>r.t<=1 || r.t>=3);assert.equal(assessHold(data,[0,0,0]).passed,false);
+});
+test('new reference excludes previous permanence',()=>assert.equal(assessHold(rows(4),[0,0,0],2).passed,false));
+test('yaw is limited travel, not silently wrapped heading',()=>{
+ const data=rows();data.forEach(r=>r.x[4]=rad(355));assert.equal(assessHold(data,[0,0,-5]).passed,false);
+});
+test('time-weighted error and interval-aligned effort',()=>{
+ const data=[row(0),row(.02),row(.04)];data.forEach(r=>{r.x[0]=rad(2);r.ref[1]=rad(3);r.effective=[1,2];});
+ data[1].saturated=true;data[2].limited=true;const s=summarize(data);
+ assert.ok(Math.abs(s.rmse[0]-2)<1e-10);assert.ok(Math.abs(s.iae[1]-.12)<1e-10);assert.ok(Math.abs(s.effort-.2)<1e-10);assert.equal(s.saturation,50);assert.equal(s.allocation,50);
+});
+test('zero duration has no fabricated performance score',()=>assert.equal(summarize([row(0)]),null));
+test('CSV v2 states units and exports actuator stages and measurements',()=>{
+ const r=row(0,[1,2,3,4,5,6]);r.effective=[7,8];const [header,values]=signalCSV([r]).split('\n').map(s=>s.split(','));
+ assert.equal(header.length,values.length);assert.equal(values[header.indexOf('plant_alpha_roll_rad')],'3');assert.equal(values[header.indexOf('plant_beta_dot_rad_s')],'2');assert.equal(values[header.indexOf('effective_ud_normalized')],'8');assert.ok(header.includes('post_saturation_uc_normalized'));
+});
+test('decimation preserves a one-sample spike and endpoints',()=>{
+ const data=Array.from({length:10000},(_,i)=>row(i*.02));data[5003].x[0]=123;
+ const indices=plotIndices(data,[r=>r.x[0]],300);assert.ok(indices.includes(5003));assert.ok(indices.includes(0));assert.ok(indices.includes(9999));assert.ok(indices.length<=302);
+});
+test('parameter changes do not reset a target; reference changes do',()=>{
+ const c={reference:'smooth',setpoint:[10,20],waypoints:[],segmentDuration:10,transitionDuration:3};
+ const exp={config:c,events:[{time:1,config:{...c,kp:[4]}},{time:2,config:{...c,setpoint:[-45,45]}}]};
+ assert.equal(activeTarget(exp,1.5).since,0);assert.equal(activeTarget(exp,3).since,2);assert.deepEqual(activeTarget(exp,3).target,[0,-45,45]);
+});
