@@ -1,7 +1,6 @@
 """Real Chromium smoke test against Vite preview, including downloaded files."""
 import csv
 import json
-import time
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
@@ -11,6 +10,7 @@ with sync_playwright() as p:
     browser = p.chromium.launch(args=['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'])
     page = browser.new_page(viewport={'width': 1440, 'height': 1000}, device_scale_factor=1)
     errors = []
+    stats = {}
     page.on('pageerror', lambda error: errors.append(str(error)))
     try:
         page.goto('http://127.0.0.1:4173/', wait_until='domcontentloaded')
@@ -21,14 +21,19 @@ with sync_playwright() as p:
         page.wait_for_function("document.querySelector('.time-overlay')?.textContent.includes('0.02')")
         assert page.locator('.convention-strip').inner_text().find('α · roll') >= 0
         page.wait_for_function("Number(document.querySelector('.scene').dataset.triangles) > 0")
-        stats = {'balanced': page.locator('.scene').evaluate('(el)=>({...el.dataset})')}
+        page.locator('.scene').scroll_into_view_if_needed()
+        page.wait_for_function("document.querySelector('.scene').dataset.quality === 'balanced'")
+        stats['balanced'] = page.locator('.scene').evaluate('(el)=>({...el.dataset})')
         assert int(stats['balanced']['triangles']) < 12000
         assert int(stats['balanced']['drawCalls']) < 100
         page.get_by_label('Modo ligero', exact=True).check()
-        page.wait_for_timeout(300)
+        page.locator('.scene').scroll_into_view_if_needed()
+        page.wait_for_function("document.querySelector('.scene').dataset.quality === 'lightweight'")
         stats['lightweight'] = page.locator('.scene').evaluate('(el)=>({...el.dataset})')
         assert int(stats['lightweight']['triangles']) < int(stats['balanced']['triangles'])
         page.get_by_label('Modo ligero', exact=True).uncheck()
+        page.locator('.scene').scroll_into_view_if_needed()
+        page.wait_for_function("document.querySelector('.scene').dataset.quality === 'balanced'")
         page.get_by_role('button', name='Superior', exact=True).click()
         page.wait_for_timeout(300)
         page.get_by_role('button', name='3D', exact=True).click()
@@ -75,6 +80,8 @@ with sync_playwright() as p:
         (out/'graphics.json').write_text(json.dumps(stats, indent=2))
         (out/'browser-summary.json').write_text(json.dumps({'passed':True,'csv_rows':len(samples),'last_t':samples[-1]['t_s'],'viewports':['1440x1000','390x844'],'renderer':'Chromium / SwiftShader; not a hardware FPS benchmark'}, indent=2))
     finally:
+        (out/'graphics.json').write_text(json.dumps(stats, indent=2))
+        (out/'render-state.json').write_text(json.dumps(page.locator('.scene').evaluate('(el)=>({...el.dataset})') if page.locator('.scene').count() else {}, indent=2))
         (out/'browser-errors.json').write_text(json.dumps(errors, indent=2))
         page.screenshot(path=str(out/'final-state.png'), full_page=True)
         browser.close()

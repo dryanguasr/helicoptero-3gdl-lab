@@ -8,7 +8,7 @@ const hints:Record<string,string>={
  tracking:'Línea continua: planta simulada. Punteada: referencia. Compara el error, no solo la forma de la curva.',
  error:'Error de seguimiento: referencia menos planta. La banda ±5° es orientativa; seguir una ruta no demuestra permanencia en un objetivo final.',
  path:'Plano de coordenadas angulares, no trayectoria cartesiana. El marcador indica el mismo instante que el visor 3D.',
- roll:'α asignado es una referencia interna. Un roll transitorio distinto de cero permite producir yaw; no es automáticamente un fallo.',
+ roll:'PID/no lineal: α interno es la asignación en cascada. LQR/LQI: la línea interna de 0° es el equilibrio, no otra consigna de seguimiento. El roll transitorio permite producir yaw.',
  control:'Antes del límite → después de saturación → efectivo tras retardo y zona muerta. Entradas normalizadas; cada valor actúa durante el intervalo que termina en t.',
  estimate:'Planta x (continua), estimación x̂ (discontinua) y medición y (puntos). Medir ángulos no equivale a conocer velocidades.',
  estimatorError:'Error de estimación x − x̂. No confundirlo con el error de seguimiento r − x.',
@@ -40,7 +40,7 @@ export default function Charts({rows,runs,cursor,onCursor}:{rows:Row[];runs:Run[
    }
   }else if(tab==='roll'){
    trace('α · planta',rows,r=>deg(r.x[2]),colors[2]);
-   trace('α · asignado',rows,r=>deg(r.theta),colors[1],'dot');
+   trace('α · interno',rows,r=>deg(r.theta),colors[1],'dot');
    trace('α · estimación',rows,r=>deg(r.hat[2]),colors[3],'dash');
   }else{
    AXES.forEach((axis,i)=>{

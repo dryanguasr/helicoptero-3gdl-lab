@@ -72,6 +72,8 @@ export default function Viewer({row,observer,rows=[]}:{row?:Row;observer:string;
       }
       controls.update();renderer.render(scene,camera);
       el.dataset.drawCalls=String(renderer.info.render.calls);el.dataset.triangles=String(renderer.info.render.triangles);el.dataset.geometries=String(renderer.info.memory.geometries);
+      // Written only after rendering; browser checks must not read stale quality statistics.
+      el.dataset.quality=d.lightweight?'lightweight':'balanced';
     }
     controls.addEventListener('change',invalidate);
     const observerSize=new ResizeObserver(resize);observerSize.observe(el);
@@ -95,7 +97,7 @@ export default function Viewer({row,observer,rows=[]}:{row?:Row;observer:string;
       <div className="scene-help">Arrastra para orbitar · rueda para acercar · Z hacia arriba</div>
     </div>
     <div className="visual-options"><label><input type="checkbox" checked={trail} onChange={e=>setTrail(e.target.checked)}/> Rastro</label><label><input type="checkbox" checked={ghost} disabled={observer==='exact'} onChange={e=>setGhost(e.target.checked)}/> Estimación</label><label><input type="checkbox" checked={lightweight} onChange={e=>setLightweight(e.target.checked)}/> Modo ligero</label></div>
-    <div className="telemetry">{[['α · roll',row?.x[2]],['β · pitch',row?.x[0]],['γ · yaw',row?.x[4]],['α asignado',row?.theta]].map(([label,value])=><div key={label}><span>{label}</span><strong>{value===undefined?'—':deg(Number(value)).toFixed(1)}<small>°</small></strong></div>)}</div>
-    <div className="viewer-note">Geometría ilustrativa, no CAD calibrado. Hélices sin RPM modeladas.<br/>Dos entradas; el roll se asigna para producir yaw.</div>
+    <div className="telemetry">{[['α · roll',row?.x[2]],['β · pitch',row?.x[0]],['γ · yaw',row?.x[4]],['α interno',row?.theta]].map(([label,value])=><div key={label}><span>{label}</span><strong>{value===undefined?'—':deg(Number(value)).toFixed(1)}<small>°</small></strong></div>)}</div>
+    <div className="viewer-note">Geometría ilustrativa, no CAD calibrado. Hélices sin RPM modeladas.<br/>α interno: asignación en cascada; equilibrio en LQR/LQI.</div>
   </section>;
 }
