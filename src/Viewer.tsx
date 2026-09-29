@@ -41,7 +41,6 @@ export default function Viewer({row,observer,rows=[]}:{row?:Row;observer:string;
     const fill=new THREE.DirectionalLight(0x84c9e3,1.3);fill.position.set(-3,2,1);scene.add(fill);
     const target=new THREE.Mesh(new THREE.SphereGeometry(.027,12,8),new THREE.MeshBasicMaterial({color:0xffffff}));scene.add(target);
     const targetRing=new THREE.Mesh(new THREE.TorusGeometry(.055,.005,4,24),new THREE.MeshBasicMaterial({color:0xffffff}));target.add(targetRing);
-    // Allocated once. Rebuild from recorded history, not from the path taken by the time slider.
     const capacity=900,positions=new Float32Array(capacity*3);
     const geometry=new THREE.BufferGeometry();const attribute=new THREE.BufferAttribute(positions,3);attribute.setUsage(THREE.DynamicDrawUsage);geometry.setAttribute('position',attribute);geometry.setDrawRange(0,0);
     const path=new THREE.Line(geometry,new THREE.LineBasicMaterial({color:0x64dfcd,transparent:true,opacity:.55}));path.frustumCulled=false;scene.add(path);
@@ -52,40 +51,28 @@ export default function Viewer({row,observer,rows=[]}:{row?:Row;observer:string;
       frame=0;if(!visible||document.hidden)return;
       const d=data.current,r=d.row;
       if(lastLight!==d.lightweight){renderer.setPixelRatio(Math.min(window.devicePixelRatio,d.lightweight?1:1.5));bench.plant.details.visible=!d.lightweight;lastLight=d.lightweight;resize();}
-      bench.estimate.yaw.visible=d.ghost&&d.observer!=='exact';
-      path.visible=d.trail;
+      bench.estimate.yaw.visible=d.ghost&&d.observer!=='exact';path.visible=d.trail;
       if(r){
         for(const [model,x] of [[bench.plant,r.x],[bench.estimate,r.hat]] as const){
           model.yaw.rotation.z=x[4];model.pitch.rotation.y=-x[0];model.roll.rotation.x=x[2];
-          // Visual rotor phase only; no motor RPM is inferred from virtual controls.
           model.rotors.forEach((rotor,i)=>{rotor.rotation.z=r.t*18*(i?1:-1);});
         }
         target.position.copy(tipPosition(r.ref[0],r.ref[1]));targetRing.quaternion.copy(camera.quaternion);
         if(d.rows!==lastRows||r.t!==lastT){
           let end=d.rows.length-1;while(end>=0&&d.rows[end].t>r.t+1e-9)end--;
           const count=Math.min(capacity,end+1);
-          for(let j=0;j<count;j++){
-            const i=count<=1?0:Math.floor(j*end/(count-1));const p=tipPosition(d.rows[i].x[0],d.rows[i].x[4]);p.toArray(positions,j*3);
-          }
+          for(let j=0;j<count;j++){const i=count<=1?0:Math.floor(j*end/(count-1));tipPosition(d.rows[i].x[0],d.rows[i].x[4]).toArray(positions,j*3);}
           attribute.needsUpdate=true;geometry.setDrawRange(0,count);lastRows=d.rows;lastT=r.t;
         }
       }
       controls.update();renderer.render(scene,camera);
-      el.dataset.drawCalls=String(renderer.info.render.calls);el.dataset.triangles=String(renderer.info.render.triangles);el.dataset.geometries=String(renderer.info.memory.geometries);
-      // Written only after rendering; browser checks must not read stale quality statistics.
-      el.dataset.quality=d.lightweight?'lightweight':'balanced';
+      el.dataset.drawCalls=String(renderer.info.render.calls);el.dataset.triangles=String(renderer.info.render.triangles);el.dataset.geometries=String(renderer.info.memory.geometries);el.dataset.quality=d.lightweight?'lightweight':'balanced';
     }
     controls.addEventListener('change',invalidate);
     const observerSize=new ResizeObserver(resize);observerSize.observe(el);
     const observerView=new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;if(visible)invalidate();});observerView.observe(el);
-    document.addEventListener('visibilitychange',invalidate);
-    redraw.current=invalidate;view.current('iso');resize();
-    return()=>{
-      cancelAnimationFrame(frame);redraw.current=()=>{};observerSize.disconnect();observerView.disconnect();document.removeEventListener('visibilitychange',invalidate);controls.removeEventListener('change',invalidate);controls.dispose();
-      const geometries=new Set<THREE.BufferGeometry>(),materials=new Set<THREE.Material>();
-      scene.traverse(object=>{const mesh=object as THREE.Mesh;if(mesh.geometry)geometries.add(mesh.geometry);if(mesh.material)(Array.isArray(mesh.material)?mesh.material:[mesh.material]).forEach(m=>materials.add(m));});
-      geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());renderer.dispose();renderer.domElement.remove();
-    };
+    document.addEventListener('visibilitychange',invalidate);redraw.current=invalidate;view.current('iso');resize();
+    return()=>{cancelAnimationFrame(frame);redraw.current=()=>{};observerSize.disconnect();observerView.disconnect();document.removeEventListener('visibilitychange',invalidate);controls.removeEventListener('change',invalidate);controls.dispose();const geometries=new Set<THREE.BufferGeometry>(),materials=new Set<THREE.Material>();scene.traverse(object=>{const mesh=object as THREE.Mesh;if(mesh.geometry)geometries.add(mesh.geometry);if(mesh.material)(Array.isArray(mesh.material)?mesh.material:[mesh.material]).forEach(m=>materials.add(m));});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());renderer.dispose();renderer.domElement.remove();};
   },[]);
   useEffect(()=>{redraw.current();},[row,observer,rows,ghost,trail,lightweight]);
   return <section className="viewer card lab-viewer">
@@ -97,7 +84,7 @@ export default function Viewer({row,observer,rows=[]}:{row?:Row;observer:string;
       <div className="scene-help">Arrastra para orbitar · rueda para acercar · Z hacia arriba</div>
     </div>
     <div className="visual-options"><label><input type="checkbox" checked={trail} onChange={e=>setTrail(e.target.checked)}/> Rastro</label><label><input type="checkbox" checked={ghost} disabled={observer==='exact'} onChange={e=>setGhost(e.target.checked)}/> Estimación</label><label><input type="checkbox" checked={lightweight} onChange={e=>setLightweight(e.target.checked)}/> Modo ligero</label></div>
-    <div className="telemetry">{[['α · roll',row?.x[2]],['β · pitch',row?.x[0]],['γ · yaw',row?.x[4]],['α interno',row?.theta]].map(([label,value])=><div key={label}><span>{label}</span><strong>{value===undefined?'—':deg(Number(value)).toFixed(1)}<small>°</small></strong></div>)}</div>
-    <div className="viewer-note">Geometría ilustrativa, no CAD calibrado. Hélices sin RPM modeladas.<br/>α interno: asignación en cascada; equilibrio en LQR/LQI.</div>
+    <div className="telemetry">{[['α · roll',row?.x[2]],['β · pitch',row?.x[0]===undefined?undefined:-row.x[0]],['γ · yaw',row?.x[4]],['α interno',row?.theta]].map(([label,value])=><div key={label}><span>{label}</span><strong>{value===undefined?'—':deg(Number(value)).toFixed(1)}<small>°</small></strong></div>)}</div>
+    <div className="viewer-note">Geometría ilustrativa, no CAD calibrado. Hélices sin RPM modeladas.<br/>α interno: asignación en cascada; 0° de equilibrio en control lineal.</div>
   </section>;
 }

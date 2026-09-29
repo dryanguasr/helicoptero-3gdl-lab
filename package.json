@@ -1,6 +1,28 @@
 {
-  "name": "helicoptero-3gdl-lab", "version": "1.0.0", "private": true, "type": "module",
-  "scripts": {"dev":"vite --host 127.0.0.1", "build":"tsc --noEmit && vite build", "preview":"vite preview --host 127.0.0.1"},
-  "dependencies": {"react":"^19.1.0", "react-dom":"^19.1.0", "three":"^0.180.0", "plotly.js-dist-min":"^3.1.0", "pyodide":"0.29.5"},
-  "devDependencies": {"@types/react":"^19.1.0", "@types/react-dom":"^19.1.0", "@types/three":"^0.180.0", "@types/plotly.js":"^3.0.0", "typescript":"^5.9.0", "vite":"^7.1.0", "@playwright/test":"^1.55.0"}
+  "name": "helicoptero-3gdl-lab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/generate-guide.mjs && vite --host 127.0.0.1",
+    "build": "node scripts/generate-guide.mjs && tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "guide": "node scripts/generate-guide.mjs"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "three": "^0.180.0",
+    "plotly.js-dist-min": "^3.1.0",
+    "pyodide": "0.29.5"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@types/three": "^0.180.0",
+    "@types/plotly.js": "^3.0.0",
+    "typescript": "^5.9.0",
+    "vite": "^7.1.0",
+    "@playwright/test": "^1.55.0"
+  }
 }
