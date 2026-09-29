@@ -1,0 +1,29 @@
+/* Teaching layer: readable at a projector, responsive without extra assets. */
+.convention-strip{display:flex;gap:20px;align-items:center;flex-wrap:wrap;padding:12px 17px;border:1px solid #d1e3de;border-radius:12px;background:#f8fcfa;margin-bottom:18px;font-size:12px;color:#385866}
+.convention-strip b{color:#126e70}.convention-strip small{margin-left:auto;color:#546b77;font-size:11px}
+.lab-viewer .scene{height:430px;background:radial-gradient(ellipse at 55% 60%,#274d6038,transparent 65%)}
+.lab-viewer .viewer-head h2{font-size:21px}.lab-viewer .scene-top span{font-size:10px;color:#d4e7ed;line-height:1.7}
+.camera-controls{position:absolute;right:16px;bottom:44px;display:flex;gap:5px;z-index:1}
+.camera-controls button{background:#112e40;color:#d6e9ef;border-color:#345565;padding:7px 10px;font-size:10px}
+.lab-viewer .scene-help{color:#aac3ce;font-size:10px}.lab-viewer .viewer-note{color:#b1c5ce;font-size:10px;line-height:1.7}
+.visual-options{display:flex;gap:15px;flex-wrap:wrap;align-items:center;padding:10px 18px;border-top:1px solid #385466;background:#112a3b;color:#c3dae1;font-size:11px}
+.visual-options label{display:flex;gap:5px;align-items:center;cursor:pointer}.visual-options input{margin:0}
+.lab-viewer .telemetry span{font-size:11px;color:#b9d9dd}.lab-viewer .telemetry>div:nth-child(1) span{color:#f3af94}.lab-viewer .telemetry>div:nth-child(2) span{color:#72ded0}.lab-viewer .telemetry>div:nth-child(3) span{color:#9cbdfa}
+.lab-viewer .telemetry strong{font-size:22px}.lab-viewer .telemetry{padding:17px 10px}
+.learning-report{margin:12px 0 25px;border-top:1px solid #dce5e4;padding-top:22px}
+.report-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px}.report-heading h3{font-size:21px;margin:5px 0;color:#173b4a}.report-heading button{white-space:nowrap}
+.report-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.report-cards article{background:#f3f8f6;border:1px solid #dce8e3;padding:17px;border-radius:12px}
+.report-cards article>span{font-size:11px;font-weight:600;color:#4b6c77}.report-cards strong{display:block;margin:10px 0;font-size:23px;color:#193f4d;font-weight:600}
+.report-cards strong small{font-size:15px;font-weight:500}.report-cards p{font-size:12px;line-height:1.65;color:#536f77;margin:0}
+.report-cards .criterion-confirmed{background:#eaf6f0;border-color:#98c6b3}.learning-report details{padding:0 12px;border-bottom:1px solid #e1eae7;font-size:12px;line-height:1.7;color:#455f6c}
+.learning-report summary{font-size:12px;color:#294d5a}.report-prompt{padding:12px 15px;background:#edf5f3;border-left:3px solid #25958e;font-size:12px;line-height:1.7;color:#3d6069}
+.chart-explanation{font-size:12px;line-height:1.7;background:#f4f8f7;padding:12px 15px;border-radius:9px;color:#415e6a;margin:0 0 8px}.chart-tabs{margin-bottom:12px}.chart-tabs button{font-size:12px;min-height:36px}
+.numeric,.select select,.toggle,.panel-title p{font-size:12px}.info-note,.muted{font-size:11px;color:#536f79}.select>span,.section-label{font-size:10px}.status-line{font-size:12px;color:#4d7078}
+.quick-points button{line-height:1.5;font-size:12px}.metrics span{color:#506c79;font-size:11px}.metrics strong{font-size:25px}.metrics small{font-size:11px;color:#536d79}.metrics-caption{font-size:11px;color:#536d79;margin:0 0 12px}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #d19544;outline-offset:3px}
+@media(min-width:1500px){.lab-viewer .scene{height:485px}}
+@media(max-width:1150px){.lab-viewer .scene{height:390px}.lab-viewer .viewer-head h2{font-size:18px}.visual-options{gap:8px;font-size:10px}.lab-viewer .telemetry span{font-size:10px}.lab-viewer .telemetry strong{font-size:19px}}
+@media(max-width:700px){.report-cards{grid-template-columns:1fr}.report-heading{align-items:flex-start;flex-wrap:wrap}.convention-strip{gap:10px;font-size:11px}.convention-strip small{margin:0;width:100%}.report-cards article{padding:13px}.report-cards strong{font-size:21px}.report-heading h3{font-size:19px}.learning-report .table-scroll table{min-width:660px}}
+@media(max-width:600px){.lab-viewer .scene{height:350px}.lab-viewer .viewer-head{padding:17px 14px}.lab-viewer .viewer-head h2{font-size:18px}.lab-viewer .scene-top{left:10px;right:10px}.lab-viewer .scene-top span{font-size:9px}.camera-controls{right:12px;gap:4px}.camera-controls button{font-size:10px;padding:7px 8px}.lab-viewer .telemetry{padding:15px 5px}.lab-viewer .telemetry>div{padding:0 6px}.lab-viewer .telemetry span{font-size:10px}.lab-viewer .telemetry strong{font-size:19px}.visual-options{font-size:11px}.chart-tabs{gap:3px}.chart-tabs button{font-size:11px}.scrubber{flex-wrap:wrap}.scrubber input{min-width:140px}.report-heading button{font-size:11px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
