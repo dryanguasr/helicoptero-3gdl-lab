@@ -37,9 +37,9 @@ with sync_playwright() as p:
         page.get_by_role('tab',name='No idealidades',exact=True).click()
         assert page.get_by_label('Perturbación constante',exact=True).is_checked()
         page.get_by_label('Velocidad de reproducción',exact=True).select_option('4')
-        page.get_by_role('button',name='Iniciar',exact=False).click()
+        page.locator('.transport .primary').click()
         page.wait_for_function("parseFloat(document.querySelector('.time-overlay').textContent)>=5",timeout=30000)
-        page.get_by_role('button',name='Pausar',exact=False).click(); page.wait_for_timeout(300)
+        page.locator('.transport .primary').click(); page.wait_for_timeout(300)
         with page.expect_download() as dl:
             page.get_by_role('button',name='↓ CSV',exact=True).click()
         csv_path=out/'signals.csv'; dl.value.save_as(csv_path)
