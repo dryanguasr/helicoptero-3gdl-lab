@@ -4,8 +4,10 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'public/python'))
 import numpy as np
 from engine import Engine,DEFAULT,validate
 from plant import Delay,deadzone,inverse_deadzone,PARAMS,nominal,rk4,linearize,apply_coulomb
-from trajectory import Trajectory
+from trajectory import Trajectory,COURSE_POINTS
 from control import Controller,Observer
+
+LEGACY_WAYPOINTS = [['D',0,0],['A',-45,-45],['D',0,0],['B',45,-45],['D',0,0],['C',0,45],['D',0,0]]
 
 def cfg(**kw):
     c=copy.deepcopy(DEFAULT);c.update(kw);return c
@@ -15,6 +17,28 @@ def run(c,T=10):
     return e
 
 class EngineTests(unittest.TestCase):
+    def test_default_full_course_route(self):
+        for initial in [[0,0,0,0,0,0], [1.5,0,3,0,-2,0]]:
+            with self.subTest(initial=initial):
+                e=run(cfg(initial=initial),DEFAULT['duration'])
+                self.assertEqual(e.reason,'Experimento completado')
+                self.assertAlmostEqual(e.history[-1]['t'],60)
+                self.assertLess(e.metrics()['rmse'][0],.2)
+                self.assertLess(e.metrics()['rmse'][1],.75)
+                arrivals=e.metrics()['waypoints']
+                self.assertEqual([w['point'] for w in arrivals],['A','D','B','D','C','D'])
+                for w in arrivals:self.assertLess(max(abs(v) for v in w['error']),1.1)
+                self.assertLess(np.linalg.norm(np.rad2deg(e.x[[0,2,4]])),.1)
+                self.assertEqual(e.metrics()['saturation'],0)
+
+    def test_course_waypoint_signs_and_legacy_serialization(self):
+        tr=Trajectory(cfg());targets={name:(beta,gamma) for name,beta,gamma in COURSE_POINTS}
+        for i,(name,yaw,elevation) in enumerate(DEFAULT['waypoints']):
+            np.testing.assert_allclose(np.rad2deg(tr.sample(10*i)[:,0]),[-targets[name][0],targets[name][1]])
+        old=cfg(waypoints=LEGACY_WAYPOINTS)
+        self.assertEqual(validate(old)['waypoints'],LEGACY_WAYPOINTS)
+        np.testing.assert_allclose(np.rad2deg(Trajectory(old).sample(10)[:,0]),[-45,-45])
+
     def test_delay_zero_and_four_steps(self):
         d=Delay();np.testing.assert_equal(d.step([2,3],0),[2,3])
         d=Delay()
@@ -125,7 +149,7 @@ class EngineTests(unittest.TestCase):
 
     def test_notebook_saved_reference(self):
         data=json.loads((Path(__file__).parent/'notebook_reference.json').read_text())
-        ctrl=Controller(cfg(controller='nonlinear'));trajectory=Trajectory(cfg(controller='nonlinear',reference='multipoint',duration=60,initial=[1.5,0,3,0,-2,0]))
+        ctrl=Controller(cfg(controller='nonlinear'));trajectory=Trajectory(cfg(controller='nonlinear',reference='multipoint',waypoints=LEGACY_WAYPOINTS,duration=60,initial=[1.5,0,3,0,-2,0]))
         for row in data:
             x=np.array(row['x']);u=np.array(row['u'])
             np.testing.assert_allclose(nominal(x,u,PARAMS),row['dx'],atol=1e-13)
@@ -138,7 +162,7 @@ class EngineTests(unittest.TestCase):
         if not path:self.skipTest('SOURCE_NOTEBOOK not supplied')
         nb=json.loads(Path(path).read_text(encoding='utf-8'));ns={'np':np};from dataclasses import dataclass;ns['dataclass']=dataclass;ns['dt']=.02
         for i in [4,5,9,14,15]:exec(''.join(nb['cells'][i]['source']),ns)
-        ctrl=Controller(cfg(controller='nonlinear'));tr=Trajectory(cfg(controller='nonlinear',reference='multipoint',duration=60,initial=[1.5,0,3,0,-2,0]))
+        ctrl=Controller(cfg(controller='nonlinear'));tr=Trajectory(cfg(controller='nonlinear',reference='multipoint',waypoints=LEGACY_WAYPOINTS,duration=60,initial=[1.5,0,3,0,-2,0]))
         for t in [0.,3.,13.,24.,43.,55.]:
             x=np.deg2rad([12,1,-4,.5,7,-.2]);u=np.array([.7,-.1])
             np.testing.assert_allclose(nominal(x,u,PARAMS),ns['nominal_dynamics'](x,u),atol=1e-14)

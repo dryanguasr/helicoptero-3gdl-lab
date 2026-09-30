@@ -5,3 +5,5 @@ __pycache__/
 test-results/
 playwright-report/
 .venv/
+review/
+public/guia-helicoptero-3gdl.pdf

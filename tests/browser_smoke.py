@@ -26,6 +26,29 @@ with sync_playwright() as p:
         stats['lightweight']=page.locator('.scene').evaluate('(el)=>({...el.dataset})')
         assert int(stats['lightweight']['triangles']) < int(stats['balanced']['triangles'])
         page.get_by_label('Modo ligero',exact=True).uncheck()
+        # Exercise the shipped configuration through the real Pyodide worker.
+        assert page.get_by_label('Ley de control',exact=True).input_value() == 'nonlinear'
+        assert page.get_by_label('Referencia',exact=True).input_value() == 'multipoint'
+        page.get_by_label('Velocidad de reproducción',exact=True).select_option('4')
+        page.locator('.transport .primary').click()
+        page.get_by_role('status').filter(has_text='Experimento completado').wait_for(timeout=120000)
+        assert '60.00' in page.locator('.time-overlay').inner_text()
+        with page.expect_download() as dl:
+            page.get_by_role('button',name='↓ CSV',exact=True).click()
+        route_path=out/'route.csv'; dl.value.save_as(route_path)
+        with route_path.open() as f: route=list(csv.DictReader(f))
+        import math
+        for axis,tolerance in [('beta',.2),('gamma',.75)]:
+            label='pitch' if axis=='beta' else 'yaw'
+            errors_deg=[math.degrees(float(r[f'plant_{axis}_{label}_rad'])-float(r[f'reference_{axis}_{label}_rad'])) for r in route]
+            assert math.sqrt(sum(e*e for e in errors_deg)/len(errors_deg)) < tolerance
+        # Prepared local trial must reset time and restore a compatible operating point.
+        page.get_by_role('button',name='Ensayo local · β = −15°',exact=True).click()
+        page.wait_for_function("document.querySelector('.time-overlay')?.textContent.includes('0.00')")
+        assert page.get_by_label('Ley de control',exact=True).input_value() == 'prefilter'
+        assert float(page.get_by_label('β deseado · valor',exact=True).input_value()) == -15
+        page.get_by_role('button',name='Ruta completa · no lineal',exact=True).click()
+        page.wait_for_function("document.querySelector('select[aria-label=\"Ley de control\"]').value==='nonlinear'")
         page.get_by_role('button',name='C',exact=True).click(); page.wait_for_timeout(700)
         beta_input=page.get_by_label('β deseado · valor',exact=True)
         assert float(beta_input.input_value()) == 45

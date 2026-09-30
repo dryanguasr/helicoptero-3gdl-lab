@@ -1,6 +1,10 @@
 import numpy as np
 
-WAYPOINTS = [['D',0,0],['A',-45,-45],['D',0,0],['B',45,-45],['D',0,0],['C',0,45],['D',0,0]]
+# Course convention: (name, beta positive down, gamma). Serialized v1 routes
+# retain their original (name, internal yaw, internal elevation-up) schema.
+COURSE_POINTS = [['D',0,0],['A',-45,-45],['B',-45,45],['C',45,0]]
+_points = {name: [name, gamma, -beta] for name,beta,gamma in COURSE_POINTS}
+WAYPOINTS = [_points[name].copy() for name in ['D','A','D','B','D','C','D']]
 
 def trapezoid(t,T,q0,q1):
     if t<=0: return np.array([q0,0.,0.])
