@@ -44,7 +44,7 @@ with sync_playwright() as p:
             assert math.sqrt(sum(e*e for e in errors_deg)/len(errors_deg)) < tolerance
         # Prepared local trial must reset time and restore a compatible operating point.
         page.get_by_role('button',name='Ensayo local · β = −15°',exact=True).click()
-        page.wait_for_function("document.querySelector('.time-overlay')?.textContent.includes('0.00')")
+        page.wait_for_function("parseFloat(document.querySelector('.time-overlay').textContent)===0 && document.querySelector('select[aria-label=\"Ley de control\"]').value==='prefilter'")
         assert page.get_by_label('Ley de control',exact=True).input_value() == 'prefilter'
         assert float(page.get_by_label('β deseado · valor',exact=True).input_value()) == -15
         page.get_by_role('button',name='Ruta completa · no lineal',exact=True).click()
