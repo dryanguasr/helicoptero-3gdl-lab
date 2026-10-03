@@ -52,7 +52,7 @@ En la convención del curso:
 
 - β_ddot = −a_β u_c cos(α) − k_β sin(β) − b_β β_dot
 - α_ddot = a_α u_d − k_α sin(α) − b_α α_dot
-- γ_ddot = a_γ u_c sin(α) cos(β) − b_γ γ_dot
+- γ_ddot = −a_γ u_c sin(α) cos(β) − b_γ γ_dot
 
 **x = [α, α_dot, β, β_dot, γ, γ_dot]^T**
 
@@ -61,6 +61,7 @@ En la convención del curso:
 - u_c modifica principalmente β; si α ≠ 0 también produce yaw.
 - u_d modifica α.
 - α funciona como variable interna para generar yaw.
+- Con empuje positivo, α positivo produce momento de yaw negativo. El signo se invierte con empuje negativo; durante el frenado el momento puede oponerse a la velocidad.
 - γ no tiene término restaurador proporcional a γ: contiene una dinámica integradora.
 - β y α sí tienen términos restauradores.
 

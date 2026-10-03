@@ -12,7 +12,9 @@ def nominal(x, u, p):
     a, av, r, rv, y, yv = x
     return np.array([av, p['a_alpha']*u[0]*np.cos(r)-p['k_alpha']*np.sin(a)-p['b_alpha']*av,
                      rv, p['a_theta']*u[1]-p['k_theta']*np.sin(r)-p['b_theta']*rv,
-                     yv, p['a_psi']*u[0]*np.sin(r)*np.cos(a)-p['b_psi']*yv])
+                     # Right-hand roll around the arm (+x): upward thrust tilts
+                     # toward -y, hence negative yaw torque for positive roll.
+                     yv, -p['a_psi']*u[0]*np.sin(r)*np.cos(a)-p['b_psi']*yv])
 
 
 def friction(x, p):

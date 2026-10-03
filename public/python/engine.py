@@ -4,7 +4,7 @@ from plant import PARAMS,C,nominal,friction,apply_coulomb,rk4,disturbance,Delay,
 from trajectory import Trajectory,WAYPOINTS
 from control import Controller,Observer
 
-DEFAULT = dict(version=1,level=1,dt=.02,seed=2026,duration=60.,controller='nonlinear',gainMethod='lqr',
+DEFAULT = dict(version=1,modelRevision=2,level=1,dt=.02,seed=2026,duration=60.,controller='nonlinear',gainMethod='lqr',
     observer='exact',plantModel='nonlinear',reference='multipoint',setpoint=[0.,0.],waypoints=WAYPOINTS,
     segmentDuration=10.,transitionDuration=3.,trim=15.,params=PARAMS,nominal=PARAMS,linked=True,
     kp=[6.,2.,14.],kd=[4.,2.,6.],ki=[.8,.2,.5],lqrQ=[30.,3.,15.,2.,20.,3.],lqrR=[1.,1.],
@@ -36,6 +36,7 @@ def upgrade(c):
 
 def validate(c):
     c=upgrade(c)
+    if c['modelRevision']!=2: raise ValueError('Revisión del modelo no compatible; se requiere roll de mano derecha (2).')
     if c['version']!=1: raise ValueError('Versión de experimento no compatible.')
     for k,options in dict(controller=['state','prefilter','integral','smc','nonlinear','pid'],
                           gainMethod=['lqr','poles'],observer=['exact','filtered','luenberger','ekf'],

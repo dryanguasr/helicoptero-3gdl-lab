@@ -2,7 +2,7 @@ import {useEffect,useRef,useState} from 'react';
 import * as THREE from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import type {Row} from './types';
-import {createBench,tipPosition} from './sceneModel';
+import {createBench,tipPosition,orientRig} from './sceneModel';
 import {deg} from './reporting';
 import './learning.css';
 
@@ -54,7 +54,8 @@ export default function Viewer({row,observer,rows=[]}:{row?:Row;observer:string;
       bench.estimate.yaw.visible=d.ghost&&d.observer!=='exact';path.visible=d.trail;
       if(r){
         for(const [model,x] of [[bench.plant,r.x],[bench.estimate,r.hat]] as const){
-          model.yaw.rotation.z=x[4];model.pitch.rotation.y=-x[0];model.roll.rotation.x=x[2];
+          // Physical right-hand angles; the plant uses negative roll-to-yaw coupling.
+          orientRig(model,x);
           model.rotors.forEach((rotor,i)=>{rotor.rotation.z=r.t*18*(i?1:-1);});
         }
         target.position.copy(tipPosition(r.ref[0],r.ref[1]));targetRing.quaternion.copy(camera.quaternion);

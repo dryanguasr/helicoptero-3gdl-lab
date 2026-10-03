@@ -38,6 +38,10 @@ with sync_playwright() as p:
         route_path=out/'route.csv'; dl.value.save_as(route_path)
         with route_path.open() as f: route=list(csv.DictReader(f))
         import math
+        first_turn=min(route,key=lambda r:abs(float(r['t_s'])-1))
+        assert float(first_turn['effective_uc_normalized']) > 0
+        assert float(first_turn['plant_alpha_roll_rad']) > 0
+        assert float(first_turn['plant_gamma_dot_rad_s']) < 0
         for axis,tolerance in [('beta',.2),('gamma',.75)]:
             label='pitch' if axis=='beta' else 'yaw'
             errors_deg=[math.degrees(float(r[f'plant_{axis}_{label}_rad'])-float(r[f'reference_{axis}_{label}_rad'])) for r in route]

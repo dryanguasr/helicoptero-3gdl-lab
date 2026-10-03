@@ -7,6 +7,10 @@ from plant import Delay,deadzone,inverse_deadzone,PARAMS,nominal,rk4,linearize,a
 from trajectory import Trajectory,COURSE_POINTS
 from control import Controller,Observer
 
+# Notebook roll and differential input are opposite to the right-hand convention.
+STATE_SIGN=np.array([1,1,-1,-1,1,1])
+INPUT_SIGN=np.array([1,-1])
+
 LEGACY_WAYPOINTS = [['D',0,0],['A',-45,-45],['D',0,0],['B',45,-45],['D',0,0],['C',0,45],['D',0,0]]
 
 def cfg(**kw):
@@ -17,6 +21,47 @@ def run(c,T=10):
     return e
 
 class EngineTests(unittest.TestCase):
+    def test_yaw_torque_matches_right_hand_geometry(self):
+        # Independent r x F derivation using the viewer's +x arm and local +z thrust.
+        for elevation in [-45,0,45]:
+            for roll in [-20,20]:
+                for collective in [-1,1]:
+                    a,r=np.deg2rad([elevation,roll])
+                    arm=np.array([np.cos(a),0,np.sin(a)])
+                    force=collective*np.array([-np.sin(a)*np.cos(r),-np.sin(r),np.cos(a)*np.cos(r)])
+                    torque=np.cross(arm,force)[2]
+                    x=np.array([a,0,r,0,0,0])
+                    self.assertAlmostEqual(nominal(x,[collective,0],PARAMS)[5],PARAMS['a_psi']*torque)
+
+    def test_allocation_sign_for_both_thrust_directions(self):
+        for mode in ['nonlinear','pid','smc']:
+            for elevation in [-30,30]:
+                for yaw in [-2,2]:
+                    x=np.deg2rad([elevation,0,0,0,0,0])
+                    ref=np.array([[x[0],0,0],[np.deg2rad(yaw),0,0]])
+                    u,roll,limited=Controller(cfg(controller=mode)).command(x,ref)
+                    self.assertFalse(limited)
+                    self.assertEqual(np.sign(u[0]),np.sign(elevation))
+                    self.assertEqual(np.sign(roll),-np.sign(elevation*yaw))
+                    x[2]=roll
+                    self.assertEqual(np.sign(nominal(x,u,PARAMS)[5]),np.sign(yaw))
+
+    def test_route_initial_roll_and_yaw_direction(self):
+        e=Engine(cfg());e.advance(50)
+        self.assertGreater(e.x[2],0) # positive right-hand roll to accelerate toward A
+        self.assertLess(e.x[5],0)
+        self.assertGreater(e.history[-1]['effective'][0],0)
+
+    def test_linear_controllers_both_trim_signs(self):
+        for method in ['lqr','poles']:
+            for mode in ['state','prefilter','integral']:
+                for trim in [-15,15]:
+                    with self.subTest(method=method,mode=mode,trim=trim):
+                        e=run(cfg(controller=mode,gainMethod=method,trim=trim,
+                            reference='smooth',initial=[trim,0,0,0,0,0],setpoint=[trim,20]),25)
+                        self.assertEqual(e.reason,'Experimento completado')
+                        self.assertLess(np.linalg.norm(np.rad2deg(e.x[[0,2,4]])-[trim,0,20]),.01)
+
     def test_default_full_course_route(self):
         for initial in [[0,0,0,0,0,0], [1.5,0,3,0,-2,0]]:
             with self.subTest(initial=initial):
@@ -151,11 +196,11 @@ class EngineTests(unittest.TestCase):
         data=json.loads((Path(__file__).parent/'notebook_reference.json').read_text())
         ctrl=Controller(cfg(controller='nonlinear'));trajectory=Trajectory(cfg(controller='nonlinear',reference='multipoint',waypoints=LEGACY_WAYPOINTS,duration=60,initial=[1.5,0,3,0,-2,0]))
         for row in data:
-            x=np.array(row['x']);u=np.array(row['u'])
-            np.testing.assert_allclose(nominal(x,u,PARAMS),row['dx'],atol=1e-13)
-            np.testing.assert_allclose(rk4(lambda x,u:nominal(x,u,PARAMS),x,u,.02),row['next'],atol=1e-13)
+            x=STATE_SIGN*np.array(row['x']);u=INPUT_SIGN*np.array(row['u'])
+            np.testing.assert_allclose(nominal(x,u,PARAMS),STATE_SIGN*np.array(row['dx']),atol=1e-13)
+            np.testing.assert_allclose(rk4(lambda x,u:nominal(x,u,PARAMS),x,u,.02),STATE_SIGN*np.array(row['next']),atol=1e-13)
             cmd,theta,_=ctrl.command(x,trajectory.sample(row['t']))
-            np.testing.assert_allclose(cmd,row['command'],atol=1e-13);self.assertAlmostEqual(theta,row['theta'])
+            np.testing.assert_allclose(cmd,INPUT_SIGN*np.array(row['command']),atol=1e-13);self.assertAlmostEqual(theta,-row['theta'])
 
     def test_notebook_nominal_and_allocation(self):
         path=os.environ.get('SOURCE_NOTEBOOK')
@@ -165,8 +210,8 @@ class EngineTests(unittest.TestCase):
         ctrl=Controller(cfg(controller='nonlinear'));tr=Trajectory(cfg(controller='nonlinear',reference='multipoint',waypoints=LEGACY_WAYPOINTS,duration=60,initial=[1.5,0,3,0,-2,0]))
         for t in [0.,3.,13.,24.,43.,55.]:
             x=np.deg2rad([12,1,-4,.5,7,-.2]);u=np.array([.7,-.1])
-            np.testing.assert_allclose(nominal(x,u,PARAMS),ns['nominal_dynamics'](x,u),atol=1e-14)
-            expected,info=ns['trajectory_allocation_control'](x,t);actual,theta,_=ctrl.command(x,tr.sample(t))
-            np.testing.assert_allclose(actual,expected,atol=1e-13);self.assertAlmostEqual(theta,info['theta_des'])
+            np.testing.assert_allclose(nominal(STATE_SIGN*x,INPUT_SIGN*u,PARAMS),STATE_SIGN*ns['nominal_dynamics'](x,u),atol=1e-14)
+            expected,info=ns['trajectory_allocation_control'](x,t);actual,theta,_=ctrl.command(STATE_SIGN*x,tr.sample(t))
+            np.testing.assert_allclose(actual,INPUT_SIGN*expected,atol=1e-13);self.assertAlmostEqual(theta,-info['theta_des'])
 
 if __name__=='__main__':unittest.main(verbosity=2)

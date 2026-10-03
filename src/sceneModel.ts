@@ -1,5 +1,10 @@
 import * as THREE from 'three';
 
+/** Physical right-hand angles; internal elevation is opposite to course beta. */
+export function orientRig(model:{yaw:THREE.Group;pitch:THREE.Group;roll:THREE.Group},x:number[]) {
+  model.yaw.rotation.z=x[4];model.pitch.rotation.y=-x[0];model.roll.rotation.x=x[2];
+}
+
 /** Procedural teaching rig: shared low-poly geometry, no model/texture downloads. */
 export function createBench(scene: THREE.Scene) {
   const box = new THREE.BoxGeometry(1,1,1);

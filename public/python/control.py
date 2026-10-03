@@ -38,7 +38,12 @@ def design_gain(c, A, B, augmented=False):
         require_controllable(A, B)
         poles = c['integralPoles'] if augmented else c['desiredPoles']
         z = np.exp(np.array(poles, dtype=float) * c['dt'])
-        return place_poles(A, B, z).gain_matrix
+        # MIMO pole placement is nonunique and its numerical solution need not
+        # be invariant under a coordinate reflection. Retain the validated
+        # synthesis basis, then transform the gain into right-hand roll units.
+        S = np.eye(len(A)); S[2,2] = S[3,3] = -1
+        U = np.diag([1.,-1.])
+        return U @ place_poles(S@A@S, S@B@U, z).gain_matrix @ S
     require_stabilizable(A, B)
     if augmented:
         Q = np.diag(c['lqrQ'] + [c['integralWeight']]*2)
@@ -119,7 +124,7 @@ class Controller:
             va = ref[0, 2] + lam[0]*eda + eta[0]*sat(sa/max(phi[0], 1e-5))
             vy = ref[1, 2] + lam[1]*edy + eta[1]*sat(sy/max(phi[1], 1e-5))
             c1 = (va + p['k_alpha']*np.sin(a) + p['b_alpha']*av)/p['a_alpha']
-            c2 = (vy + p['b_psi']*yv)/(p['a_psi']*max(np.cos(a), .2))
+            c2 = -(vy + p['b_psi']*yv)/(p['a_psi']*max(np.cos(a), .2))
             raw = np.arctan2(c2, c1)
             if raw > np.pi/2: raw -= np.pi
             if raw < -np.pi/2: raw += np.pi
@@ -137,12 +142,12 @@ class Controller:
         if mode == 'pid':
             acc += ki[:2]*self.integral[:2]
             uc = (acc[0] + p['k_alpha']*np.sin(ref[0, 0]))/p['a_alpha']
-            authority = p['a_psi']*uc*np.cos(a)
+            authority = -p['a_psi']*uc*np.cos(a)
             raw = (acc[1]/authority) if abs(authority) > .05 else 0.
             limited = abs(authority) <= .05 and abs(acc[1]) > 1e-5
         else:
             c1 = (acc[0] + p['k_alpha']*np.sin(a) + p['b_alpha']*av)/p['a_alpha']
-            c2 = (acc[1] + p['b_psi']*yv)/(p['a_psi']*max(np.cos(a), .2))
+            c2 = -(acc[1] + p['b_psi']*yv)/(p['a_psi']*max(np.cos(a), .2))
             raw = np.arctan2(c2, c1)
             if raw > np.pi/2: raw -= np.pi
             if raw < -np.pi/2: raw += np.pi
