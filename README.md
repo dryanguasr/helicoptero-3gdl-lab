@@ -1,64 +1,59 @@
-# Helicóptero 3 GDL · Laboratorio de control
+<div align="center">
 
-**[Abrir el laboratorio público](https://dryanguasr.github.io/helicoptero-3gdl-lab/)** · [Código y versiones](https://github.com/dryanguasr/helicoptero-3gdl-lab)
+# Helicóptero 3 GDL · Laboratorio interactivo de control
+### Experimenta con regulación, seguimiento y no idealidades desde el navegador
 
-Laboratorio público en React/TypeScript + Three.js/Plotly. El motor Python corre en un Web Worker mediante Pyodide. La interfaz se mantiene compacta; teoría, protocolos y preguntas viven en docs/guia-pedagogica.md. npm run dev y npm run build generan public/guia-helicoptero-3gdl.pdf.
+**React · TypeScript · Three.js · Plotly · Python / Pyodide**
 
-## Convención
+**[Abrir laboratorio web](https://dryanguasr.github.io/helicoptero-3gdl-lab/)** · [Guía pedagógica](docs/guia-pedagogica.md) · [Pruebas](tests/) · [Referencia técnica completa](README_TECHNICAL.md)
 
-Sistema dextrógiro: x adelante, y izquierda, z arriba.
+</div>
 
-- α: roll sobre +x.
-- β: pitch sobre +y; **β positivo baja el extremo de los motores**.
-- γ: yaw sobre +z.
+## Qué puedes aprender
 
-El motor heredado conserva elevación positiva hacia arriba por compatibilidad JSON v1. La interfaz aplica β = −elevación_interna.
+Explorar un helicóptero didáctico de tres grados de libertad, cambiar el esquema de control y observar cómo evoluciona el seguimiento ante perturbaciones y límites del actuador. La visualización 3D **ilustra el modelo**; no representa una planta física calibrada.
 
-## Controladores
+| Tema | Experimentos disponibles |
+| --- | --- |
+| Estado y seguimiento | Regulación por LQR/polos, precompensación e integral |
+| Robustez | SMC de capa límite, PID y opciones de asignación no lineal |
+| No idealidades | Saturación, fricción, zona muerta, retardo, desbalance y ráfagas |
+| Evidencia | Gráficas, métricas de error y comparaciones pareadas |
 
-El diseño de K (LQR o polos) se separa de la arquitectura servo:
+## Un laboratorio, dos capas
 
-- u = u_e + K(x_d−x): error de estado sin feedforward adicional.
-- u = u_e − Kδx + N̄δr: precompensador nominal.
-- ξ_dot = r−y; u = u_e − Kδx + K_iξ: integral.
-- SMC en cascada con capa límite sat(s/φ).
-- PID y asignación no lineal como referencias.
+```text
+Interfaz web (React / TypeScript)
+          │ parámetros, resultados
+          ▼
+       Web Worker
+          ▼
+Python (planta, control, trayectoria, motor)
+          ▼
+    Gráficas + escena 3D
+```
 
-## No idealidades
+El motor Python se ejecuta en el navegador mediante **Pyodide**, con dependencia de recursos externos durante su inicialización. Las convenciones se definen expresamente: **x adelante, y izquierda, z arriba**; roll α, pitch β y yaw γ. La interfaz usa β positivo hacia abajo para el extremo de motores.
 
-Coulomb con adherencia, desbalance, perturbación constante, ráfagas, saturación, zona muerta, retardo y discrepancia modelo-planta. Son magnitudes didácticas.
+## Ejecutar localmente
 
-## Ejecutar
+```bash
+npm ci
+npm run dev
+```
 
-    npm ci
-    npm run dev
+Validar antes de publicar:
 
-Validación:
+```bash
+pip install -r requirements.txt
+python -m unittest discover -s tests -v
+npm run build
+```
 
-    pip install -r requirements.txt
-    python -m unittest discover -s tests -v
-    npm run build
+El proyecto incluye comprobaciones numéricas y de navegador y un flujo de publicación en GitHub Pages. La documentación señala qué experimentos son **didácticos** y qué parámetros no deben interpretarse como PWM ni fuerzas calibradas.
 
-El build genera también la guía PDF. GitHub Actions publica dist/ tras un push a main.
+## Para profundizar
 
-## Filosofía
+[Guía de aprendizaje](docs/guia-pedagogica.md) · [Auditoría técnica](docs/audit-2026-09-28.md) · [Convenciones](docs/ROLL-CONVENTION.md) · [Referencia técnica anterior, íntegra](README_TECHNICAL.md).
 
-Compara de forma pareada: misma referencia, condición inicial, punto de operación, Δt, semilla y horizonte; cambia un solo factor. RMSE resume la corrida y el error medio de los últimos 3 s ayuda a identificar offset.
-
-Yaw puede mostrar comportamiento integrador alrededor de un punto con autoridad; cambiar β puede exigir una nueva entrada estacionaria. El precompensador usa el equilibrio nominal; integral y SMC aportan mecanismos distintos ante sesgos e incertidumbre.
-
-## Compatibilidad y límites
-
-- JSON sigue en version 1; lqr antiguo migra a prefilter y lqi a integral.
-- El modelo 3D es ilustrativo.
-- u_c y u_d no son PWM ni fuerzas calibradas.
-- Robustez no reemplaza controlabilidad.
-- Sin integración de hardware ni gestión de estudiantes.
-
-## Estructura
-
-- public/python/: planta, trayectoria, control y motor.
-- src/: interfaz, visor, gráficas y worker.
-- docs/guia-pedagogica.md: material docente.
-- scripts/generate-guide.mjs: PDF ligero para Pages.
-- tests/: pruebas numéricas, reporte y navegador.
+> **Límites:** sin validación de hardware ni certificación de estabilidad/robustez física. Los experimentos comparan modelos y escenarios definidos; el lector debe revisar sus supuestos.
